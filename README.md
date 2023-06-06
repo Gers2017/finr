@@ -64,5 +64,5 @@ finr .rs ~/ -e -i Files Videos Downloads .config .local
 
 ### Is this another find replacement?
 
-Nope. Find is still a great tool with more feature than finr.
-Since finr is new,
+Nope. I consider Find to be a great tool with more features than Finr.
+Since Finr is new, it is more of an experiment than a robust tool.
