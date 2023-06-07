@@ -10,6 +10,7 @@ fn print_help() {
     println!("{:<20} Max recursion depth", "--max-depth | -d");
     println!("{:<20} Type of entry to search", "--type | -t");
     println!("{:<20} Directories to ignore", "--ignore | -i");
+    println!("{:<20} Directories to include", "--include | -n");
     println!(
         "{:<20} Use [PATTERN] to search at the end",
         "--extension | -e"
@@ -70,17 +71,29 @@ fn main() -> anyhow::Result<()> {
                     break;
                 }
 
-                let dir = args_iter
-                    .next()
-                    .ok_or(anyhow::anyhow!("Missing argument for --ignore flag"))?
-                    .trim()
-                    .to_string();
+                let dir = args_iter.next().unwrap().trim().to_string();
 
                 if dir.is_empty() {
-                    anyhow::bail!("Invalid empty directory \"{}\"", dir);
+                    anyhow::bail!("Invalid value for --ignore argument: \"{}\"", dir);
                 }
 
                 config.ignore_dirs.insert(dir);
+            }
+        }
+
+        if arg == "--include" || arg == "-n" {
+            while let Some(current) = args_iter.peek() {
+                if current.starts_with('-') {
+                    break;
+                }
+
+                let dir = args_iter.next().unwrap().trim().to_string();
+
+                if dir.is_empty() {
+                    anyhow::bail!("Invalid value for --include argument: \"{}\"", dir);
+                }
+
+                config.include_dirs.insert(dir);
             }
         }
 
@@ -111,6 +124,7 @@ pub struct Config {
     pub is_extension: bool,
     pub max_depth: usize,
     pub ignore_dirs: HashSet<String>,
+    pub include_dirs: HashSet<String>,
 }
 
 impl Default for Config {
@@ -135,6 +149,7 @@ impl Default for Config {
             is_extension: false,
             max_depth: 100,
             ignore_dirs,
+            include_dirs: HashSet::default(),
         }
     }
 }
@@ -186,7 +201,9 @@ pub fn find<P: AsRef<Path>>(
         }
 
         if is_dir {
-            if name.starts_with('.') || config.ignore_dirs.contains(&name) {
+            if !config.include_dirs.contains(&name)
+                && (name.starts_with('.') || config.ignore_dirs.contains(&name))
+            {
                 continue;
             }
 
