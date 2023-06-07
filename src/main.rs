@@ -1,4 +1,5 @@
 use anyhow::{Context, Ok};
+use std::collections::HashSet;
 use std::env;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
@@ -79,7 +80,7 @@ fn main() -> anyhow::Result<()> {
                     anyhow::bail!("Invalid empty directory \"{}\"", dir);
                 }
 
-                config.ignore_dirs.push(dir);
+                config.ignore_dirs.insert(dir);
             }
         }
 
@@ -93,11 +94,11 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let mut result = FindResult::default();
+    let mut result = Vec::with_capacity(6);
     find(path, 0, &config, &mut result)?;
 
-    for e in result.entries.iter() {
-        println!("{}", e);
+    for e in result.iter() {
+        println!("{}", e.display());
     }
 
     Ok(())
@@ -109,12 +110,12 @@ pub struct Config {
     pub entry_type: EntryType,
     pub is_extension: bool,
     pub max_depth: usize,
-    pub ignore_dirs: Vec<String>,
+    pub ignore_dirs: HashSet<String>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        let ignore_dirs: Vec<_> = [
+        let ignore_dirs: HashSet<_> = [
             "node_modules",
             "target",
             ".git",
@@ -122,6 +123,7 @@ impl Default for Config {
             ".rustup",
             ".npm",
             ".ssh",
+            "__pycache__",
         ]
         .into_iter()
         .map(|item| item.to_string())
@@ -163,24 +165,11 @@ impl EntryType {
     }
 }
 
-#[derive(Debug)]
-pub struct FindResult {
-    pub entries: Vec<String>,
-}
-
-impl Default for FindResult {
-    fn default() -> Self {
-        Self {
-            entries: Vec::with_capacity(6),
-        }
-    }
-}
-
 pub fn find<P: AsRef<Path>>(
     root: P,
     depth: usize,
     config: &Config,
-    result: &mut FindResult,
+    result: &mut Vec<PathBuf>,
 ) -> anyhow::Result<()> {
     if depth > config.max_depth {
         return Ok(());
@@ -193,11 +182,11 @@ pub fn find<P: AsRef<Path>>(
         let is_dir = entry.file_type().context("File type Error")?.is_dir();
 
         if config.entry_type.is_dir() == is_dir && config.is_match(&name) {
-            result.entries.push(entry.path().display().to_string());
+            result.push(entry.path());
         }
 
         if is_dir {
-            if config.ignore_dirs.contains(&name) {
+            if name.starts_with('.') || config.ignore_dirs.contains(&name) {
                 continue;
             }
 
