@@ -1,6 +1,6 @@
 [package]
 name = "finr"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Gers2017"]
 description = """finr is a command line tool that recursively searches files and directories with a given pattern. Built with the phrase "Work smarter not harder" in mind."""
