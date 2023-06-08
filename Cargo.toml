@@ -12,6 +12,7 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0.71"
+bpaf = "0.8.1"
 
 [profile.release]
 debug = false
