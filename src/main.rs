@@ -1,5 +1,5 @@
 use anyhow::{Context, Ok};
-use finr::{find, print_help, Config, EntryType};
+use finr::{find, print_help, Config};
 use std::env;
 use std::path::PathBuf;
 
@@ -41,9 +41,9 @@ fn main() -> anyhow::Result<()> {
                 .next()
                 .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?;
 
-            config.entry_type = match arg.as_str() {
-                "file" | "f" => Ok(EntryType::File),
-                "directory" | "d" => Ok(EntryType::Directory),
+            config.is_dir = match arg.as_str() {
+                "file" | "f" => Ok(false),
+                "directory" | "d" => Ok(true),
                 _ => anyhow::bail!(
                     "Invalid argument \"{}\" for --type flag. Valid arguments [file | directory]",
                     arg

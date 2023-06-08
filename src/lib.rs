@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug)]
 pub struct Config {
     pub target: String,
-    pub entry_type: EntryType,
+    pub is_dir: bool,
     pub is_extension: bool,
     pub max_depth: usize,
     pub ignore_dirs: HashSet<String>,
@@ -31,7 +31,7 @@ impl Default for Config {
 
         Self {
             target: String::new(),
-            entry_type: EntryType::File,
+            is_dir: false,
             is_extension: false,
             max_depth: 100,
             ignore_dirs,
@@ -46,22 +46,6 @@ impl Config {
             filename.ends_with(&self.target)
         } else {
             filename.contains(&self.target)
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum EntryType {
-    File = 0,
-    Directory = 1,
-}
-
-impl EntryType {
-    pub fn is_dir(&self) -> bool {
-        use EntryType::*;
-        match self {
-            File => false,
-            Directory => true,
         }
     }
 }
@@ -82,7 +66,7 @@ pub fn find<P: AsRef<Path>>(
         let name = entry.file_name().to_string_lossy().to_string();
         let is_dir = entry.file_type().context("File type Error")?.is_dir();
 
-        if config.entry_type.is_dir() == is_dir && config.is_match(&name) {
+        if config.is_dir == is_dir && config.is_match(&name) {
             result.push(entry.path());
         }
 
