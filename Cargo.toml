@@ -3,7 +3,9 @@ name = "finr"
 version = "0.1.2"
 edition = "2021"
 authors = ["Gers2017"]
-description = """finr is a command line tool that recursively searches files and directories with a given pattern. Built with the phrase "Work smarter not harder" in mind."""
+
+description = """finr recursively searches files and directories with a pattern while ignoring irrelevant directories.
+Built with the phrase "Work smarter not harder" in mind."""
 
 keywords = ["command-line", "find", "search", "pattern", "tool"]
 categories = ["command-line-utilities", "development-tools"]
