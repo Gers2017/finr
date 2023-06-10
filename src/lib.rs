@@ -1,4 +1,5 @@
 use anyhow::{Context, Ok};
+use regex::Regex;
 use std::collections::HashSet;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
@@ -8,6 +9,7 @@ pub struct Config {
     pub target: String,
     pub is_dir: bool,
     pub is_extension: bool,
+    pub pattern: Option<Regex>,
     pub max_depth: usize,
     pub ignore_dirs: HashSet<String>,
     pub include_dirs: HashSet<String>,
@@ -33,6 +35,7 @@ impl Default for Config {
             target: String::new(),
             is_dir: false,
             is_extension: false,
+            pattern: None,
             max_depth: 100,
             ignore_dirs,
             include_dirs: HashSet::default(),
@@ -41,12 +44,16 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn is_match(&self, filename: &str) -> bool {
+    pub fn is_match(&self, name: &str) -> bool {
         if self.is_extension {
-            filename.ends_with(&self.target)
-        } else {
-            filename.contains(&self.target)
+            return name.ends_with(&self.target);
         }
+
+        if let Some(ref pattern) = self.pattern {
+            return pattern.is_match(name);
+        }
+
+        name.contains(&self.target)
     }
 }
 
@@ -87,6 +94,10 @@ pub fn find<P: AsRef<Path>>(
 pub fn print_help() {
     println!("finr [PATTERN] [PATH?] [FLAGS...]");
     println!();
+    println!(
+        "{:<20} Use [PATTERN] as a regex and use to match files or directories",
+        "--regex | -R"
+    );
     println!(
         "{:<20} Max recursion depth. By default is 100",
         "--max-depth | -d"

@@ -1,5 +1,6 @@
 use anyhow::{Context, Ok};
 use finr::{find, print_help, Config};
+use regex::Regex;
 use std::env;
 use std::path::PathBuf;
 
@@ -11,6 +12,13 @@ fn main() -> anyhow::Result<()> {
         if target == "--help" {
             print_help();
             return Ok(());
+        }
+
+        if target.starts_with('-') {
+            anyhow::bail!(
+                "Expected pattern: Invalid positional argument \"{}\"",
+                target
+            );
         }
 
         config.target = target;
@@ -28,6 +36,10 @@ fn main() -> anyhow::Result<()> {
     }
 
     while let Some(arg) = args_iter.next() {
+        if arg == "--regex" || arg == "-R" {
+            config.pattern = Some(Regex::new(&config.target)?);
+        }
+
         if arg == "--max-depth" || arg == "-d" {
             config.max_depth = args_iter
                 .next()
