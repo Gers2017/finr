@@ -63,7 +63,7 @@ fn main() -> anyhow::Result<()> {
             }?;
         }
 
-        if arg == "--ignore" || arg == "-i" {
+        if arg == "--exclude" || arg == "-E" {
             while let Some(current) = args_iter.peek() {
                 if current.starts_with('-') {
                     break;
@@ -72,14 +72,14 @@ fn main() -> anyhow::Result<()> {
                 let dir = args_iter.next().unwrap().trim().to_string();
 
                 if dir.is_empty() {
-                    anyhow::bail!("Invalid value for --ignore argument: \"{}\"", dir);
+                    anyhow::bail!("Invalid value for --exclude argument: \"{}\"", dir);
                 }
 
-                config.ignore_dirs.insert(dir);
+                config.exclude.insert(dir);
             }
         }
 
-        if arg == "--include" || arg == "-n" {
+        if arg == "--include" || arg == "-i" {
             while let Some(current) = args_iter.peek() {
                 if current.starts_with('-') {
                     break;
@@ -91,7 +91,7 @@ fn main() -> anyhow::Result<()> {
                     anyhow::bail!("Invalid value for --include argument: \"{}\"", dir);
                 }
 
-                config.include_dirs.insert(dir);
+                config.include.insert(dir);
             }
         }
 

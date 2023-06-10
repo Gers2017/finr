@@ -11,13 +11,13 @@ pub struct Config {
     pub is_extension: bool,
     pub pattern: Option<Regex>,
     pub max_depth: usize,
-    pub ignore_dirs: HashSet<String>,
-    pub include_dirs: HashSet<String>,
+    pub exclude: HashSet<String>,
+    pub include: HashSet<String>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        let ignore_dirs: HashSet<_> = [
+        let exclude: HashSet<_> = [
             "node_modules",
             "target",
             ".git",
@@ -37,8 +37,8 @@ impl Default for Config {
             is_extension: false,
             pattern: None,
             max_depth: 100,
-            ignore_dirs,
-            include_dirs: HashSet::default(),
+            exclude,
+            include: HashSet::default(),
         }
     }
 }
@@ -78,8 +78,8 @@ pub fn find<P: AsRef<Path>>(
         }
 
         if is_dir {
-            if !config.include_dirs.contains(&name)
-                && (name.starts_with('.') || config.ignore_dirs.contains(&name))
+            if !config.include.contains(&name)
+                && (name.starts_with('.') || config.exclude.contains(&name))
             {
                 continue;
             }
@@ -95,27 +95,27 @@ pub fn print_help() {
     println!("finr [PATTERN] [PATH?] [FLAGS...]");
     println!();
     println!(
-        "{:<20} Use [PATTERN] as a regex and use to match files or directories",
+        "{:<20} Use [PATTERN] as a regex. Match files or directories with it",
         "--regex | -R"
     );
     println!(
-        "{:<20} Max recursion depth. By default is 100",
+        "{:<20} Use [PATTERN] to match at the end of files or directories",
+        "--extension | -e"
+    );
+    println!(
+        "{:<20} Maximum depth of search. By default is set to 100",
         "--max-depth | -d"
     );
     println!(
-        "{:<20} Type of entry to search. Possible values: f | file | directory | d",
+        "{:<20} Type of search. Possible values: f | file | directory | d (By default is set to file)",
         "--type | -t"
     );
     println!(
-        "{:<20} Directories to ignore. Expects a name not a path",
-        "--ignore | -i"
+        "{:<20} Directories to exclude in the search. Expects a name not a path",
+        "--exclude | -E"
     );
     println!(
-        "{:<20} Directories to include. Expects a name not a path",
-        "--include | -n"
-    );
-    println!(
-        "{:<20} Use [PATTERN] to match at the end of the file or directory",
-        "--extension | -e"
+        "{:<20} Directories to include in the search. Expects a name not a path",
+        "--include | -i"
     );
 }
