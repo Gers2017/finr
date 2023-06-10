@@ -15,10 +15,7 @@ fn main() -> anyhow::Result<()> {
         }
 
         if target.starts_with('-') {
-            anyhow::bail!(
-                "Expected pattern: Invalid positional argument \"{}\"",
-                target
-            );
+            anyhow::bail!("Expected target: Invalid argument \"{}\"", target);
         }
 
         config.target = target;
