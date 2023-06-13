@@ -3,6 +3,7 @@ use regex::Regex;
 use std::collections::HashSet;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
+pub mod args;
 
 #[derive(Debug)]
 pub struct Config {
