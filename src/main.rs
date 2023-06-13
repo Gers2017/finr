@@ -44,7 +44,8 @@ fn main() -> anyhow::Result<()> {
         if arg == "--type" || arg == "-t" {
             let arg = args_iter
                 .next()
-                .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?;
+                .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?
+                .to_lowercase();
 
             config.is_dir = match arg.as_str() {
                 "file" | "f" => Ok(false),
