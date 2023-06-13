@@ -9,6 +9,11 @@ pub struct ParseResult {
     pub path: PathBuf,
 }
 
+/// Parses command line arguments.
+///
+/// If the result is Ok and the inner value is None, either no arguments were given or the --help flag was present.
+///
+/// If the result is Ok and the inner value is Some, then the parsing was successful.
 pub fn parse() -> anyhow::Result<Option<ParseResult>> {
     let mut args_iter = env::args().skip(1).peekable();
     let mut config = Config::default();
@@ -35,73 +40,77 @@ pub fn parse() -> anyhow::Result<Option<ParseResult>> {
     }
 
     while let Some(arg) = args_iter.next() {
-        if arg == "--regex" || arg == "-R" {
-            config.pattern = Some(Regex::new(&config.target)?);
-        }
+        match arg.as_str() {
+            "--regex" | "-R" => {
+                config.pattern = Some(Regex::new(&config.target)?);
+            }
 
-        if arg == "--max-depth" || arg == "-d" {
-            config.max_depth = args_iter
-                .next()
-                .ok_or(anyhow::anyhow!("Missing argument for --max-depth flag"))?
-                .parse::<usize>()
-                .context("Argument for --max-depth should be a positive integer")?;
-        }
+            "--max-depth" | "-d" => {
+                config.max_depth = args_iter
+                    .next()
+                    .ok_or(anyhow::anyhow!("Missing argument for --max-depth flag"))?
+                    .parse::<usize>()
+                    .context("Argument for --max-depth should be a positive integer")?;
+            }
 
-        if arg == "--type" || arg == "-t" {
-            let arg = args_iter
-                .next()
-                .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?
-                .to_lowercase();
+            "--type" | "-t" => {
+                let arg = args_iter
+                    .next()
+                    .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?
+                    .to_lowercase();
 
-            config.is_dir = match arg.as_str() {
-                "file" | "f" => Ok(false),
-                "directory" | "d" => Ok(true),
-                _ => anyhow::bail!(
+                config.is_dir = match arg.as_str() {
+                    "file" | "f" => Ok(false),
+                    "directory" | "d" => Ok(true),
+                    _ => anyhow::bail!(
                     "Invalid argument \"{}\" for --type flag. Valid arguments [file | directory]",
                     arg
                 ),
-            }?;
-        }
-
-        if arg == "--exclude" || arg == "-E" {
-            while let Some(current) = args_iter.peek() {
-                if current.starts_with('-') {
-                    break;
-                }
-
-                let dir = args_iter.next().unwrap().trim().to_string();
-
-                if dir.is_empty() {
-                    anyhow::bail!("Invalid value for --exclude argument: \"{}\"", dir);
-                }
-
-                config.exclude.insert(dir);
+                }?;
             }
-        }
 
-        if arg == "--include" || arg == "-i" {
-            while let Some(current) = args_iter.peek() {
-                if current.starts_with('-') {
-                    break;
+            "--exclude" | "-E" => {
+                while let Some(current) = args_iter.peek() {
+                    if current.starts_with('-') {
+                        break;
+                    }
+
+                    let dir = args_iter.next().unwrap().trim().to_string();
+
+                    if dir.is_empty() {
+                        anyhow::bail!("Invalid value for --exclude argument: \"{}\"", dir);
+                    }
+
+                    config.exclude.insert(dir);
                 }
-
-                let dir = args_iter.next().unwrap().trim().to_string();
-
-                if dir.is_empty() {
-                    anyhow::bail!("Invalid value for --include argument: \"{}\"", dir);
-                }
-
-                config.include.insert(dir);
             }
-        }
 
-        if arg == "--extension" || arg == "-e" {
-            config.is_extension = true
-        }
+            "--include" | "-i" => {
+                while let Some(current) = args_iter.peek() {
+                    if current.starts_with('-') {
+                        break;
+                    }
 
-        if arg == "--help" {
-            print_help();
-            return Ok(None);
+                    let dir = args_iter.next().unwrap().trim().to_string();
+
+                    if dir.is_empty() {
+                        anyhow::bail!("Invalid value for --include argument: \"{}\"", dir);
+                    }
+
+                    config.include.insert(dir);
+                }
+            }
+
+            "--extension" | "-e" => config.is_extension = true,
+
+            "--help" | "-h" => {
+                print_help();
+                return Ok(None);
+            }
+
+            _ => {
+                anyhow::bail!("Unknown flag: \"{}\"", arg)
+            }
         }
     }
 
