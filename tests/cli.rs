@@ -74,7 +74,43 @@ fn empty_arguments() -> anyhow::Result<()> {
 #[test]
 fn uppercase_type_argument() -> anyhow::Result<()> {
     let mut cmd = Command::cargo_bin("finr")?;
-    cmd.arg(".+\\.ts").arg("--type").arg("DIRECTORY");
+    cmd.arg("main.ts").arg("--type").arg("DIRECTORY");
     cmd.assert().success();
+    Ok(())
+}
+
+#[test]
+fn missing_type_argument() -> anyhow::Result<()> {
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg(".+\\.ts").arg("--regex").arg("--type");
+    cmd.assert().failure();
+    Ok(())
+}
+
+#[test]
+fn invalid_type_argument() -> anyhow::Result<()> {
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg(".+\\.ts").arg("--regex").arg("--type").arg("TXT");
+    cmd.assert().failure();
+    Ok(())
+}
+
+#[test]
+fn invalid_max_depth_argument() -> anyhow::Result<()> {
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg("main.go").arg("--max-depth").arg("not-a-number");
+    cmd.assert().failure();
+    Ok(())
+}
+
+#[test]
+fn unknown_flag() -> anyhow::Result<()> {
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg(".+\\.ts")
+        .arg("--regex")
+        .arg("--min-depth")
+        .arg("50")
+        .arg("--typo");
+    cmd.assert().failure().stderr(contains("Unknown flag"));
     Ok(())
 }
