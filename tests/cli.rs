@@ -34,13 +34,3 @@ fn search_files_regex() -> anyhow::Result<()> {
     root.close()?;
     Ok(())
 }
-
-#[test]
-fn invalid_target() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("finr")?;
-    cmd.arg("--regex");
-
-    cmd.assert().failure().stderr(contains("Expected pattern"));
-
-    Ok(())
-}

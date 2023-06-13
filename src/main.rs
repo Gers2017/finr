@@ -14,10 +14,6 @@ fn main() -> anyhow::Result<()> {
             return Ok(());
         }
 
-        if target.starts_with('-') {
-            anyhow::bail!("Expected target: Invalid argument \"{}\"", target);
-        }
-
         config.target = target;
     } else {
         print_help();
