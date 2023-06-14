@@ -18,19 +18,28 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let exclude: HashSet<_> = [
-            "node_modules",
-            "target",
-            ".git",
-            ".cargo",
-            ".rustup",
-            ".npm",
-            ".ssh",
-            "__pycache__",
-        ]
-        .into_iter()
-        .map(|item| item.to_string())
-        .collect();
+        let exclude: HashSet<String> = HashSet::from_iter(
+            [
+                "node_modules",
+                "target",
+                "debug",
+                "__pycache__",
+                "cache",
+                "output",
+                "bower_components",
+                "web_modules",
+                "out",
+                "dist",
+                "coverage",
+                ".git",
+                ".cargo",
+                ".rustup",
+                ".npm",
+                ".ssh",
+            ]
+            .into_iter()
+            .map(|s| s.to_string()),
+        );
 
         Self {
             target: String::new(),
