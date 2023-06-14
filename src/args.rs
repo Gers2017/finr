@@ -9,12 +9,7 @@ pub struct ParseResult {
     pub path: PathBuf,
 }
 
-/// Parses command line arguments.
-///
-/// If the result is Ok and the inner value is None, either no arguments were given or the --help flag was present.
-///
-/// If the result is Ok and the inner value is Some, then the parsing was successful.
-pub fn parse() -> anyhow::Result<Option<ParseResult>> {
+pub fn parse() -> anyhow::Result<ParseResult> {
     let mut args_iter = env::args().skip(1).peekable();
     let mut config = Config::default();
     let mut path = env::current_dir()?;
@@ -22,13 +17,13 @@ pub fn parse() -> anyhow::Result<Option<ParseResult>> {
     if let Some(target) = args_iter.next() {
         if target == "--help" {
             print_help();
-            return Ok(None);
+            std::process::exit(0);
         }
 
         config.target = target;
     } else {
         print_help();
-        return Ok(None);
+        std::process::exit(0);
     }
 
     if let Some(arg) = args_iter.peek() {
@@ -105,7 +100,7 @@ pub fn parse() -> anyhow::Result<Option<ParseResult>> {
 
             "--help" | "-h" => {
                 print_help();
-                return Ok(None);
+                std::process::exit(0);
             }
 
             _ => {
@@ -114,5 +109,5 @@ pub fn parse() -> anyhow::Result<Option<ParseResult>> {
         }
     }
 
-    Ok(Some(ParseResult { config, path }))
+    Ok(ParseResult { config, path })
 }
