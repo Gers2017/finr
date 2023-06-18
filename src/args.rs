@@ -36,8 +36,16 @@ pub fn parse() -> anyhow::Result<ParseResult> {
 
     while let Some(arg) = args_iter.next() {
         match arg.as_str() {
+            "--start" | "-s" => {
+                config.match_mode = 1;
+            }
+
+            "--end" | "-e" => {
+                config.match_mode = 2;
+            }
+
             "--regex" | "-R" => {
-                config.pattern = Some(Regex::new(&config.target)?);
+                config.match_mode = 3;
             }
 
             "--max-depth" | "-d" => {
@@ -96,8 +104,6 @@ pub fn parse() -> anyhow::Result<ParseResult> {
                 }
             }
 
-            "--extension" | "-e" => config.is_extension = true,
-
             "--help" | "-h" => {
                 print_help();
                 std::process::exit(0);
@@ -107,6 +113,10 @@ pub fn parse() -> anyhow::Result<ParseResult> {
                 anyhow::bail!("Unknown flag: \"{}\"", arg)
             }
         }
+    }
+
+    if config.match_mode == 3 {
+        config.regex = Some(Regex::new(&config.target)?);
     }
 
     Ok(ParseResult { config, path })

@@ -1,6 +1,6 @@
 use anyhow::{Context, Ok};
+use fxhash::FxHashSet as HashSet;
 use regex::Regex;
-use std::collections::HashSet;
 use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 pub mod args;
@@ -9,8 +9,8 @@ pub mod args;
 pub struct Config {
     pub target: String,
     pub is_dir: bool,
-    pub is_extension: bool,
-    pub pattern: Option<Regex>,
+    pub match_mode: u8,
+    pub regex: Option<Regex>,
     pub max_depth: usize,
     pub exclude: HashSet<String>,
     pub include: HashSet<String>,
@@ -18,7 +18,7 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let exclude: HashSet<String> = HashSet::from_iter(
+        let exclude = HashSet::from_iter(
             [
                 "node_modules",
                 "target",
@@ -42,10 +42,10 @@ impl Default for Config {
         );
 
         Self {
-            target: String::new(),
+            target: String::default(),
             is_dir: false,
-            is_extension: false,
-            pattern: None,
+            match_mode: 0u8,
+            regex: None,
             max_depth: 100,
             exclude,
             include: HashSet::default(),
@@ -55,15 +55,18 @@ impl Default for Config {
 
 impl Config {
     pub fn is_match(&self, name: &str) -> bool {
-        if self.is_extension {
-            return name.ends_with(&self.target);
+        match self.match_mode {
+            1 => name.starts_with(&self.target),
+            2 => name.ends_with(&self.target),
+            3 => {
+                return self
+                    .regex
+                    .as_ref()
+                    .map(|r| r.is_match(name))
+                    .unwrap_or_default()
+            }
+            _ => name.len() >= self.target.len() && name.contains(&self.target),
         }
-
-        if let Some(ref pattern) = self.pattern {
-            return pattern.is_match(name);
-        }
-
-        name.contains(&self.target)
     }
 }
 
@@ -77,10 +80,15 @@ pub fn find<P: AsRef<Path>>(
         return Ok(());
     }
 
-    let entries = read_dir(root)?;
+    for entry in read_dir(root)?.flatten() {
+        let name = entry.file_name();
+        let name = name.to_str();
 
-    for entry in entries.into_iter().filter_map(Result::ok) {
-        let name = entry.file_name().to_string_lossy().to_string();
+        if name.is_none() {
+            continue;
+        }
+
+        let name = name.unwrap();
         let is_dir = entry.file_type().context("File type Error")?.is_dir();
 
         if config.is_dir == is_dir && config.is_match(&name) {
@@ -88,8 +96,8 @@ pub fn find<P: AsRef<Path>>(
         }
 
         if is_dir {
-            if !config.include.contains(&name)
-                && (name.starts_with('.') || config.exclude.contains(&name))
+            if !config.include.contains(name)
+                && (name.starts_with('.') || config.exclude.contains(name))
             {
                 continue;
             }
@@ -102,15 +110,19 @@ pub fn find<P: AsRef<Path>>(
 }
 
 pub fn print_help() {
-    println!("finr [PATTERN] [PATH?] [FLAGS...]");
+    println!("finr [TARGET] [PATH?] [FLAGS...]");
     println!();
     println!(
-        "{:<20} Use [PATTERN] as a regex. Match files or directories with it",
+        "{:<20} Use [TARGET] as a regular expression (regex) to match files or directories",
         "--regex | -R"
     );
     println!(
-        "{:<20} Use [PATTERN] to match at the end of files or directories",
-        "--extension | -e"
+        "{:<20} Use [TARGET] to match at the start of files or directories",
+        "--start | -s"
+    );
+    println!(
+        "{:<20} Use [TARGET] to match at the end of files or directories",
+        "--end | -e"
     );
     println!(
         "{:<20} Maximum depth of search. By default is set to 100",
@@ -121,11 +133,11 @@ pub fn print_help() {
         "--type | -t"
     );
     println!(
-        "{:<20} Directories to exclude in the search. Expects a name not a path",
+        "{:<20} Directories to exclude in the search. Expects names, not paths",
         "--exclude | -E"
     );
     println!(
-        "{:<20} Directories to include in the search. Expects a name not a path",
+        "{:<20} Directories to include in the search. Expects names, not paths",
         "--include | -i"
     );
 }
