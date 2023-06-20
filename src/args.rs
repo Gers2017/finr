@@ -1,5 +1,5 @@
 use anyhow::{Context, Ok};
-use regex::Regex;
+use regex::RegexBuilder;
 
 use crate::{print_help, Config};
 use std::{env, path::PathBuf};
@@ -13,6 +13,7 @@ pub fn parse() -> anyhow::Result<ParseResult> {
     let mut args_iter = env::args().skip(1).peekable();
     let mut config = Config::default();
     let mut path = env::current_dir()?;
+    let mut ignore_case = false;
 
     if let Some(target) = args_iter.next() {
         if target == "--help" {
@@ -46,6 +47,10 @@ pub fn parse() -> anyhow::Result<ParseResult> {
 
             "--regex" | "-R" => {
                 config.match_mode = 3;
+            }
+
+            "--ignore-case" | "-i" => {
+                ignore_case = true;
             }
 
             "--max-depth" | "-d" => {
@@ -88,7 +93,7 @@ pub fn parse() -> anyhow::Result<ParseResult> {
                 }
             }
 
-            "--include" | "-i" => {
+            "--include" | "-I" => {
                 while let Some(current) = args_iter.peek() {
                     if current.starts_with('-') {
                         break;
@@ -116,7 +121,10 @@ pub fn parse() -> anyhow::Result<ParseResult> {
     }
 
     if config.match_mode == 3 {
-        config.regex = Some(Regex::new(&config.target)?);
+        let regex = RegexBuilder::new(&config.target)
+            .case_insensitive(ignore_case)
+            .build()?;
+        config.regex = Some(regex);
     }
 
     Ok(ParseResult { config, path })

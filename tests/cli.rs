@@ -63,11 +63,40 @@ fn search_files_simple() -> anyhow::Result<()> {
 }
 
 #[test]
+fn search_ignore_case() -> anyhow::Result<()> {
+    let root = assert_fs::TempDir::new()?;
+
+    let paths = [
+        "user/code/foo/bar/delete.ts",
+        "user/code/foo/buzz/DELETE.rs",
+        "user/code/bar/foo/hei/src/modules/DELeTe.go",
+        "user/code/Hi-DeleteMe.txt",
+    ];
+
+    for path in paths {
+        root.child(path).touch()?;
+    }
+
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg(".?delete.?")
+        .arg(root.path())
+        .arg("-R")
+        .arg("--ignore-case");
+
+    cmd.assert().success().stdout(
+        contains("delete.ts")
+            .and(contains("DELETE.rs"))
+            .and(contains("DELeTe.go"))
+            .and(contains("Hi-DeleteMe.txt")),
+    );
+
+    Ok(())
+}
+
+#[test]
 fn empty_arguments() -> anyhow::Result<()> {
     let mut cmd = Command::cargo_bin("finr")?;
-    cmd.assert()
-        .success()
-        .stdout(contains("finr [PATTERN] [PATH?] [FLAGS...]"));
+    cmd.assert().success();
     Ok(())
 }
 

@@ -125,6 +125,10 @@ pub fn print_help() {
         "--end | -e"
     );
     println!(
+        "{:<20} The search is case-insensitive, this only works with --regex flag",
+        "--ignore-case | -i"
+    );
+    println!(
         "{:<20} Maximum depth of search. By default is set to 100",
         "--max-depth | -d"
     );
@@ -138,6 +142,6 @@ pub fn print_help() {
     );
     println!(
         "{:<20} Directories to include in the search. Expects names, not paths",
-        "--include | -i"
+        "--include | -I"
     );
 }
