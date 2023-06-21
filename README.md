@@ -19,7 +19,7 @@ Recursively search for files and directories with a pattern, ignoring irrelevant
 
 I developed finr to quickly find files and directories in the filesystem, ignoring certain directories that usually do not contain what I'm looking for.
 Finr is heavily inspired by ripgrep, specifically the ignore directories part.
-I wanted a tool that was fast and easy to use. So it may not be what you're looking for.
+I wanted a tool that was both fast and easy to use.
 
 ## Installation
 
@@ -46,7 +46,7 @@ finr --help
 ```
 
 Finr looks for **files** and starts at the **current directory** by default.
-To search for a directory, use `-t d` (--type directory).
+To search for a directory, use `-t d` (`--type directory`).
 The max-depth is arbitrarily set to 100.
 
 Search for .rs files using regex (Uses the [regex crate](https://crates.io/crates/regex))
@@ -61,10 +61,23 @@ finr searching for `.md` files with a max depth of 200
 finr '.+\.md$' --regex --max-depth 200
 ```
 
+Search for directories that start with `build` inside the `Documents` directory. (Uses [starts_with](https://doc.rust-lang.org/std/string/struct.String.html#method.starts_with))
+
+```sh
+finr build ~/Documents --start -t d
+```
+
 Search for files with `.rs`. Starting at the current directory. (Uses [ends_with](https://doc.rust-lang.org/std/string/struct.String.html#method.ends_with))
 
 ```sh
 finr .rs -e
+```
+
+Searching for files that contain `main` in the name, starting at `Documents`.
+(Uses [contains](https://doc.rust-lang.org/std/string/struct.String.html#method.contains))
+
+```sh
+finr main ~/Documents/
 ```
 
 Search for directories that contain `_node_modules_` in the name.
@@ -73,22 +86,16 @@ Search for directories that contain `_node_modules_` in the name.
 finr node_modules -t d
 ```
 
-Searching for files that contain `main` in the name (Uses [contains](https://doc.rust-lang.org/std/string/struct.String.html#method.contains))
+Search for files with `.rs` at the end, starting at the `/home/` directory while excluding (`-E`) some directories.
 
 ```sh
-finr main
-```
-
-Search for files with `.rs` starting at the /home/ directory while ignoring some directories.
-
-```sh
-finr .rs ~/ -e -i Files Videos Downloads .config .local
+finr .rs ~/ -e -E Files Videos Downloads .config .local
 ```
 
 Search for files that contain `main.c` starting at the current directory. Ignoring `Music Videos Downloads` and Including `.config .local .ignore`.
 
 ```sh
-finr main.c --ignore Music Videos Downloads --include .config .local .ignore
+finr main.c --exclude Music Videos Downloads --include .config .local .ignore
 ```
 
 ### What about find or fd-find?
