@@ -53,20 +53,19 @@ impl Default for Config {
     }
 }
 
-impl Config {
-    pub fn is_match(&self, name: &str) -> bool {
-        match self.match_mode {
-            1 => name.starts_with(&self.target),
-            2 => name.ends_with(&self.target),
-            3 => {
-                return self
-                    .regex
-                    .as_ref()
-                    .map(|r| r.is_match(name))
-                    .unwrap_or_default()
-            }
-            _ => name.len() >= self.target.len() && name.contains(&self.target),
-        }
+pub fn get_match_fn(config: &Config) -> impl Fn(&str, &Config) -> bool {
+    match config.match_mode {
+        0 => |name: &str, config: &Config| name.contains(&config.target),
+        1 => |name: &str, config: &Config| name.starts_with(&config.target),
+        2 => |name: &str, config: &Config| name.ends_with(&config.target),
+        3 => |name: &str, config: &Config| {
+            config
+                .regex
+                .as_ref()
+                .map(|r| r.is_match(name))
+                .unwrap_or_default()
+        },
+        _ => unreachable!(),
     }
 }
 
@@ -75,6 +74,7 @@ pub fn find<P: AsRef<Path>>(
     depth: usize,
     config: &Config,
     result: &mut Vec<PathBuf>,
+    match_fn: &impl Fn(&str, &Config) -> bool,
 ) -> anyhow::Result<()> {
     if depth > config.max_depth {
         return Ok(());
@@ -91,7 +91,7 @@ pub fn find<P: AsRef<Path>>(
         let name = name.unwrap();
         let is_dir = entry.file_type().context("File type Error")?.is_dir();
 
-        if config.is_dir == is_dir && config.is_match(&name) {
+        if config.is_dir == is_dir && match_fn(name, config) {
             result.push(entry.path());
         }
 
@@ -102,7 +102,7 @@ pub fn find<P: AsRef<Path>>(
                 continue;
             }
 
-            find(entry.path(), depth + 1, config, result)?;
+            find(entry.path(), depth + 1, config, result, match_fn)?;
         }
     }
 

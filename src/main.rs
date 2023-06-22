@@ -1,6 +1,6 @@
 use anyhow::Ok;
 use finr::args::ParseResult;
-use finr::{args, find};
+use finr::{args, find, get_match_fn};
 use std::io::Write;
 
 fn main() -> anyhow::Result<()> {
@@ -11,7 +11,8 @@ fn main() -> anyhow::Result<()> {
     let stdout = std::io::stdout();
     let mut lock = stdout.lock();
 
-    find(path, 0, &config, &mut result)?;
+    let match_fn = get_match_fn(&config);
+    find(path, 0, &config, &mut result, &match_fn)?;
 
     for e in result.iter() {
         writeln!(lock, "{}", e.display())?;
