@@ -9,13 +9,14 @@ pub struct ParseResult {
     pub path: PathBuf,
 }
 
-pub fn parse() -> anyhow::Result<ParseResult> {
-    let mut args_iter = env::args().skip(1).peekable();
+pub fn parse<I: Iterator<Item = String>>(
+    mut iter: std::iter::Peekable<I>,
+) -> anyhow::Result<ParseResult> {
     let mut config = Config::default();
     let mut path = env::current_dir()?;
     let mut ignore_case = false;
 
-    if let Some(target) = args_iter.next() {
+    if let Some(target) = iter.next() {
         if target == "--help" {
             print_help();
             std::process::exit(0);
@@ -27,15 +28,15 @@ pub fn parse() -> anyhow::Result<ParseResult> {
         std::process::exit(0);
     }
 
-    if let Some(arg) = args_iter.peek() {
+    if let Some(arg) = iter.peek() {
         if !arg.starts_with('-') {
             path = PathBuf::from(arg);
             // skip path
-            args_iter.next();
+            iter.next();
         }
     }
 
-    while let Some(arg) = args_iter.next() {
+    while let Some(arg) = iter.next() {
         match arg.as_str() {
             "--start" | "-s" => {
                 config.match_mode = 1;
@@ -54,7 +55,7 @@ pub fn parse() -> anyhow::Result<ParseResult> {
             }
 
             "--max-depth" | "-d" => {
-                config.max_depth = args_iter
+                config.max_depth = iter
                     .next()
                     .ok_or(anyhow::anyhow!("Missing argument for --max-depth flag"))?
                     .parse::<usize>()
@@ -62,7 +63,7 @@ pub fn parse() -> anyhow::Result<ParseResult> {
             }
 
             "--type" | "-t" => {
-                let arg = args_iter
+                let arg = iter
                     .next()
                     .ok_or(anyhow::anyhow!("Missing Argument for --type flag"))?
                     .to_lowercase();
@@ -78,12 +79,12 @@ pub fn parse() -> anyhow::Result<ParseResult> {
             }
 
             "--exclude" | "-E" => {
-                while let Some(current) = args_iter.peek() {
+                while let Some(current) = iter.peek() {
                     if current.starts_with('-') {
                         break;
                     }
 
-                    let dir = args_iter.next().unwrap().trim().to_string();
+                    let dir = iter.next().unwrap().trim().to_string();
 
                     if dir.is_empty() {
                         anyhow::bail!("Invalid value for --exclude argument: \"{}\"", dir);
@@ -94,12 +95,12 @@ pub fn parse() -> anyhow::Result<ParseResult> {
             }
 
             "--include" | "-I" => {
-                while let Some(current) = args_iter.peek() {
+                while let Some(current) = iter.peek() {
                     if current.starts_with('-') {
                         break;
                     }
 
-                    let dir = args_iter.next().unwrap().trim().to_string();
+                    let dir = iter.next().unwrap().trim().to_string();
 
                     if dir.is_empty() {
                         anyhow::bail!("Invalid value for --include argument: \"{}\"", dir);
