@@ -1,7 +1,7 @@
 use anyhow::{Context, Ok};
 use regex::RegexBuilder;
 
-use crate::{print_help, Config};
+use crate::{print_help, Config, MatchMode};
 use std::{env, path::PathBuf};
 
 pub struct ParseResult {
@@ -39,15 +39,15 @@ pub fn parse<I: Iterator<Item = String>>(
     while let Some(arg) = iter.next() {
         match arg.as_str() {
             "--start" | "-s" => {
-                config.match_mode = 1;
+                config.match_mode = MatchMode::Start;
             }
 
             "--end" | "-e" => {
-                config.match_mode = 2;
+                config.match_mode = MatchMode::End;
             }
 
             "--regex" | "-R" => {
-                config.match_mode = 3;
+                config.match_mode = MatchMode::Regex;
             }
 
             "--ignore-case" | "-i" => {
@@ -121,7 +121,7 @@ pub fn parse<I: Iterator<Item = String>>(
         }
     }
 
-    if config.match_mode == 3 {
+    if config.match_mode == MatchMode::Regex {
         let regex = RegexBuilder::new(&config.target)
             .case_insensitive(ignore_case)
             .build()?;

@@ -5,11 +5,20 @@ use std::fs::read_dir;
 use std::path::{Path, PathBuf};
 pub mod args;
 
+#[repr(u8)]
+#[derive(Debug, PartialEq)]
+pub enum MatchMode {
+    Contains = 0,
+    Start = 1,
+    End = 2,
+    Regex = 3,
+}
+
 #[derive(Debug)]
 pub struct Config {
     pub target: String,
     pub is_dir: bool,
-    pub match_mode: u8,
+    pub match_mode: MatchMode,
     pub regex: Option<Regex>,
     pub max_depth: usize,
     pub exclude: HashSet<String>,
@@ -44,7 +53,7 @@ impl Default for Config {
         Self {
             target: String::default(),
             is_dir: false,
-            match_mode: 0u8,
+            match_mode: MatchMode::Contains,
             regex: None,
             max_depth: 100,
             exclude,
@@ -55,17 +64,16 @@ impl Default for Config {
 
 pub fn get_match_fn(config: &Config) -> impl Fn(&str, &Config) -> bool {
     match config.match_mode {
-        0 => |name: &str, config: &Config| name.contains(&config.target),
-        1 => |name: &str, config: &Config| name.starts_with(&config.target),
-        2 => |name: &str, config: &Config| name.ends_with(&config.target),
-        3 => |name: &str, config: &Config| {
+        MatchMode::Contains => |name: &str, config: &Config| name.contains(&config.target),
+        MatchMode::Start => |name: &str, config: &Config| name.starts_with(&config.target),
+        MatchMode::End => |name: &str, config: &Config| name.ends_with(&config.target),
+        MatchMode::Regex => |name: &str, config: &Config| {
             config
                 .regex
                 .as_ref()
                 .map(|r| r.is_match(name))
                 .unwrap_or_default()
         },
-        _ => unreachable!(),
     }
 }
 
