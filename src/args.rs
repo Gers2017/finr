@@ -14,7 +14,6 @@ pub fn parse<I: Iterator<Item = String>>(
 ) -> anyhow::Result<ParseResult> {
     let mut config = Config::default();
     let mut path = env::current_dir()?;
-    let mut ignore_case = false;
 
     if let Some(target) = iter.next() {
         if target == "--help" {
@@ -51,7 +50,7 @@ pub fn parse<I: Iterator<Item = String>>(
             }
 
             "--ignore-case" | "-i" => {
-                ignore_case = true;
+                config.ignore_case = true;
             }
 
             "--max-depth" | "-d" => {
@@ -123,7 +122,7 @@ pub fn parse<I: Iterator<Item = String>>(
 
     if config.match_mode == MatchMode::Regex {
         let regex = RegexBuilder::new(&config.target)
-            .case_insensitive(ignore_case)
+            .case_insensitive(config.ignore_case)
             .build()?;
         config.regex = Some(regex);
     }

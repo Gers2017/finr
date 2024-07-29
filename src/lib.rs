@@ -21,6 +21,7 @@ pub struct Config {
     pub match_mode: MatchMode,
     pub regex: Option<Regex>,
     pub max_depth: usize,
+    pub ignore_case: bool,
     pub exclude: HashSet<String>,
     pub include: HashSet<String>,
 }
@@ -56,6 +57,7 @@ impl Default for Config {
             match_mode: MatchMode::Contains,
             regex: None,
             max_depth: 100,
+            ignore_case: false,
             exclude,
             include: HashSet::default(),
         }
@@ -89,23 +91,26 @@ pub fn find<P: AsRef<Path>>(
     }
 
     for entry in read_dir(root)?.flatten() {
-        let name = entry.file_name();
-        let name = name.to_str();
+        let name = entry.file_name().to_str().map(|s| s.to_owned());
 
         if name.is_none() {
             continue;
         }
 
-        let name = name.unwrap();
+        let mut name = name.unwrap();
         let is_dir = entry.file_type().context("File type Error")?.is_dir();
 
-        if config.is_dir == is_dir && match_fn(name, config) {
+        if config.ignore_case {
+            name = name.to_lowercase();
+        }
+
+        if config.is_dir == is_dir && match_fn(&name, config) {
             result.push(entry.path());
         }
 
         if is_dir {
-            if !config.include.contains(name)
-                && (name.starts_with('.') || config.exclude.contains(name))
+            if !config.include.contains(&name)
+                && (name.starts_with('.') || config.exclude.contains(&name))
             {
                 continue;
             }
