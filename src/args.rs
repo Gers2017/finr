@@ -1,7 +1,6 @@
+use crate::{print_help, Config, MatchMode, DEFAULT_EXCLUDE_LIST};
 use anyhow::{Context, Ok};
 use regex::RegexBuilder;
-
-use crate::{print_help, Config, MatchMode};
 use std::{env, path::PathBuf};
 
 pub struct ParseResult {
@@ -109,6 +108,10 @@ pub fn parse<I: Iterator<Item = String>>(
                 }
             }
 
+            "--include-hidden" | "-H" => {
+                config.include_hidden = true;
+            }
+
             "--help" | "-h" => {
                 print_help();
                 std::process::exit(0);
@@ -126,6 +129,11 @@ pub fn parse<I: Iterator<Item = String>>(
             .build()?;
         config.regex = Some(regex);
     }
+
+    // extend exclude set
+    config
+        .exclude
+        .extend(DEFAULT_EXCLUDE_LIST.into_iter().map(|s| s.to_string()));
 
     Ok(ParseResult { config, path })
 }

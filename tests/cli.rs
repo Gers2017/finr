@@ -1,4 +1,4 @@
-use anyhow::Ok;
+use anyhow;
 use assert_cmd::prelude::*;
 use assert_fs::{
     self,
@@ -142,4 +142,51 @@ fn unknown_flag() -> anyhow::Result<()> {
         .arg("--typo");
     cmd.assert().failure().stderr(contains("Unknown flag"));
     Ok(())
+}
+
+#[test]
+fn include_hidden_files() -> anyhow::Result<()> {
+    let root = assert_fs::TempDir::new()?;
+
+    let paths = [
+        "foo/code/bar/secrets/project/.git/d",       // include
+        "foo/code/foo/bar/foo-project/target/c.hpp", // exclude (by default)
+        "foo/code/typescript/src/modules/provider/.cargo/bot.hpp", // include
+        "foo/code/cli/.ignore/a.hpp",                // exclude
+        "foo/code/cli/.config/hydra.hpp",            // include
+    ];
+
+    for path in paths {
+        root.child(path).touch()?;
+    }
+
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg(".hpp")
+        .arg(root.path())
+        .arg("--include-hidden")
+        .arg("--ignore-case")
+        .arg("--exclude")
+        .arg(".ignore");
+
+    let output = utils::output_as_str(cmd.output()?)?;
+    println!("RESULT:\n{}{}", output, "---".repeat(4));
+
+    cmd.assert()
+        .success()
+        .stdout(contains(".cargo/bot.hpp").and(contains(".config/hydra.hpp")));
+
+    Ok(())
+}
+
+mod utils {
+    pub fn output_as_str(output: std::process::Output) -> anyhow::Result<String> {
+        match String::from_utf8(output.stdout) {
+            Ok(str) => {
+                return anyhow::Ok(str);
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!(e).context("failed to generate utf8 string"));
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-use anyhow::{self, Ok};
+use anyhow;
 use finr::{args::*, MatchMode};
 
 #[test]
@@ -12,6 +12,10 @@ fn basic_parse_test() -> anyhow::Result<()> {
         "300",
         "--regex",
         "--ignore-case",
+        "--include-hidden",
+        "--exclude",
+        "foo",
+        "bar",
     ]
     .into_iter()
     .map(|s| s.to_owned())
@@ -24,6 +28,8 @@ fn basic_parse_test() -> anyhow::Result<()> {
     assert_eq!(config.max_depth, 300);
     assert_eq!(config.match_mode, MatchMode::Regex);
     assert_eq!(config.ignore_case, true);
+    assert_eq!(config.include_hidden, true);
+    assert!(config.exclude.contains("foo") && config.exclude.contains("bar"));
 
     Ok(())
 }
