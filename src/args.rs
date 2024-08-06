@@ -14,13 +14,11 @@ pub fn parse<I: Iterator<Item = String>>(
     let mut config = Config::default();
     let mut path = env::current_dir()?;
 
-    if let Some(target) = iter.next() {
-        if target == "--help" {
-            print_help();
-            std::process::exit(0);
+    if let Some(arg) = iter.peek() {
+        if !arg.starts_with('-') {
+            // consume first argument
+            config.target = iter.next().unwrap();
         }
-
-        config.target = target;
     } else {
         print_help();
         std::process::exit(0);

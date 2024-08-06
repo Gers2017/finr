@@ -178,6 +178,23 @@ fn include_hidden_files() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[test]
+fn print_help_test() -> anyhow::Result<()> {
+    let mut cmd = Command::cargo_bin("finr")?;
+    cmd.arg("-h");
+    cmd.assert()
+        .success()
+        .stdout(contains("finr [TARGET] [PATH?] [FLAGS...]"));
+
+    cmd = Command::cargo_bin("finr")?;
+    cmd.arg("--help");
+    cmd.assert()
+        .success()
+        .stdout(contains("finr [TARGET] [PATH?] [FLAGS...]"));
+
+    Ok(())
+}
+
 mod utils {
     pub fn output_as_str(output: std::process::Output) -> anyhow::Result<String> {
         match String::from_utf8(output.stdout) {
